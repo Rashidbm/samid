@@ -1,7 +1,6 @@
 # Samid — Acoustic Drone Detection
 
-**Author:** Rashid Binkulaib
-**Built for:** Defensathon 2026 (Saudi defense hackathon, Drones + AI track)
+Built for Defensathon 2026 (Saudi defense hackathon, Drones + AI track).
 
 Passive acoustic drone detection, classification, and localisation.
 Designed for cheap distributed microphone nodes running at the edge — no
