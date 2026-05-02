@@ -207,7 +207,7 @@ def main():
     p.add_argument("--wav", default=None)
     p.add_argument("--device", type=int, default=None)
     p.add_argument("--list-devices", action="store_true")
-    p.add_argument("--threshold", type=float, default=0.3)
+    p.add_argument("--threshold", type=float, default=0.25)
     p.add_argument("--smoothing", type=int, default=2)
     p.add_argument("--boost-drone", action="store_true")
     args = p.parse_args()
