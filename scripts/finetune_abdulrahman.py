@@ -1,16 +1,3 @@
-"""
-Domain-adaptation fine-tune using Abdulrahman's real-world drone recording.
-
-The principle: the team's real deployment audio looks like Abdulrahman's
-recording (phone-quality, outdoor, drone at varying distance). The model
-detects the drone but with low confidence (peak 0.42). We pseudo-label
-the loud drone-active windows from Abdulrahman's clip as positive
-examples and continue training, mixed with the existing training pool.
-
-This raises confidence on real-world team recordings without breaking
-the model on training-distribution audio.
-"""
-
 from __future__ import annotations
 import argparse
 import math
@@ -21,7 +8,6 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 import torch
-from torch import nn
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import Dataset, DataLoader, ConcatDataset, WeightedRandomSampler
@@ -37,13 +23,8 @@ from src.augment import AugConfig, apply_waveform_augs, apply_spec_augs
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def extract_drone_windows(wav_path: Path, model, fe, device,
-                          win: int = 16_000, hop: int = 8_000,
-                          threshold: float = 0.25) -> list[np.ndarray]:
-    """
-    Run base model on the recording, keep windows where p(drone) >= threshold.
-    These become pseudo-labeled positive examples for fine-tuning.
-    """
+def extract_drone_windows(wav_path, model, fe, device,
+                          win=16_000, hop=8_000, threshold=0.25):
     import librosa
     arr, sr = sf.read(str(wav_path), dtype="float32", always_2d=False)
     if arr.ndim > 1:
@@ -66,22 +47,19 @@ def extract_drone_windows(wav_path: Path, model, fe, device,
 
 
 class PseudoLabeledPositives(Dataset):
-    def __init__(self, clips: list[np.ndarray], fe,
-                 noise_clips=None, rir_clips=None, train_mode: bool = True,
-                 reps: int = 50):
+    def __init__(self, clips, fe, train_mode=True, reps=50):
         self.clips = clips
         self.fe = fe
         self.train_mode = train_mode
         self.target_len = int(CFG.clip_seconds * CFG.sample_rate)
         self.sr = CFG.sample_rate
-        self.noise_clips = noise_clips
-        self.rir_clips = rir_clips
         self.aug_cfg = AugConfig()
         self._rng = random.Random(20260502)
-        self.reps = reps  # repeat each clip with augmentation
+        self.reps = reps
         print(f"[abd] {len(clips)} drone windows; {len(clips) * reps} virtual examples")
 
-    def __len__(self): return len(self.clips) * self.reps
+    def __len__(self):
+        return len(self.clips) * self.reps
 
     def __getitem__(self, i):
         clip = self.clips[i % len(self.clips)]
@@ -93,11 +71,9 @@ class PseudoLabeledPositives(Dataset):
         else:
             arr = clip
         if self.train_mode:
-            arr = apply_waveform_augs(
-                arr.astype(np.float32, copy=False), self.sr, is_drone=True,
-                noise_clips=self.noise_clips, rir_clips=self.rir_clips,
-                rng=self._rng, cfg=self.aug_cfg,
-            )
+            arr = apply_waveform_augs(arr.astype(np.float32, copy=False), self.sr,
+                                       is_drone=True, noise_clips=None, rir_clips=None,
+                                       rng=self._rng, cfg=self.aug_cfg)
         feats = self.fe(arr, sampling_rate=self.sr, return_tensors="pt")
         x = feats["input_values"].squeeze(0)
         if self.train_mode:
@@ -106,7 +82,7 @@ class PseudoLabeledPositives(Dataset):
 
 
 class GeronimobassoSlice(Dataset):
-    def __init__(self, hf_split, fe, n: int, seed: int = 42, train_mode: bool = True):
+    def __init__(self, hf_split, fe, n, seed=42, train_mode=True):
         self.hf = hf_split
         self.fe = fe
         rng = np.random.RandomState(seed)
@@ -117,7 +93,8 @@ class GeronimobassoSlice(Dataset):
         self.aug_cfg = AugConfig()
         self._rng = random.Random(seed + 1)
 
-    def __len__(self): return len(self.indices)
+    def __len__(self):
+        return len(self.indices)
 
     def __getitem__(self, i):
         row = self.hf[int(self.indices[i])]
@@ -134,8 +111,8 @@ class GeronimobassoSlice(Dataset):
         label = int(row["label"])
         if self.train_mode:
             arr = apply_waveform_augs(arr, self.sr, is_drone=(label == 1),
-                                      noise_clips=None, rir_clips=None,
-                                      rng=self._rng, cfg=self.aug_cfg)
+                                       noise_clips=None, rir_clips=None,
+                                       rng=self._rng, cfg=self.aug_cfg)
         feats = self.fe(arr, sampling_rate=self.sr, return_tensors="pt")
         x = feats["input_values"].squeeze(0)
         if self.train_mode:
@@ -143,7 +120,7 @@ class GeronimobassoSlice(Dataset):
         return {"input_values": x, "label": torch.tensor(label, dtype=torch.long)}
 
 
-def main() -> int:
+def main():
     p = argparse.ArgumentParser()
     p.add_argument("--ckpt", type=Path, default=ROOT / "runs/20260429-112104/best_v2.pt")
     p.add_argument("--out", type=Path, default=ROOT / "runs/20260429-112104/best_abd.pt")
@@ -151,8 +128,7 @@ def main() -> int:
                    default=ROOT / "data/abdulrahman/DroneAbdulrahman.wav")
     p.add_argument("--steps", type=int, default=600)
     p.add_argument("--batch-size", type=int, default=8)
-    p.add_argument("--abd-threshold", type=float, default=0.25,
-                   help="keep abdulrahman windows above this raw p")
+    p.add_argument("--abd-threshold", type=float, default=0.25)
     p.add_argument("--lr-backbone", type=float, default=5e-7)
     p.add_argument("--lr-head", type=float, default=2e-5)
     args = p.parse_args()
@@ -162,38 +138,33 @@ def main() -> int:
               else torch.device("cpu"))
     print(f"[device] {device}")
 
-    print(f"[ckpt] loading {args.ckpt}")
     model, fe = build_model()
     state = torch.load(args.ckpt, map_location="cpu", weights_only=False)
     model.load_state_dict(state["model_state"])
     model.to(device)
 
-    print(f"[abd] extracting drone windows from {args.abd_wav}…")
     clips = extract_drone_windows(args.abd_wav, model, fe, device,
                                    threshold=args.abd_threshold)
     if not clips:
-        print("[abd] no drone-active windows found; aborting")
+        print("[abd] no drone-active windows found")
         return 1
     abd_ds = PseudoLabeledPositives(clips, fe)
 
-    print("[geron] loading slice…")
     geron = load_dataset("geronimobasso/drone-audio-detection-samples",
                          cache_dir=str(CACHE_DIR))
     geron_split = geron["train"] if "train" in geron else geron[list(geron.keys())[0]]
     geron_ds = GeronimobassoSlice(geron_split, fe, n=2000)
 
     train_ds = ConcatDataset([abd_ds, geron_ds])
-    print(f"[data] combined size = {len(train_ds)}")
 
-    # Weighted sampler: balance abdulrahman positive vs geron mixed
     geron_labels = np.asarray([int(geron_split[int(idx)]["label"])
                                for idx in geron_ds.indices])
-    train_labels = np.concatenate([np.ones(len(abd_ds), dtype=int), geron_labels])
-    counts = np.bincount(train_labels)
+    labels = np.concatenate([np.ones(len(abd_ds), dtype=int), geron_labels])
+    counts = np.bincount(labels)
     inv_freq = 1.0 / np.maximum(counts, 1)
-    sample_weights = inv_freq[train_labels]
+    weights = inv_freq[labels]
     sampler = WeightedRandomSampler(
-        weights=torch.as_tensor(sample_weights, dtype=torch.double),
+        weights=torch.as_tensor(weights, dtype=torch.double),
         num_samples=args.steps * args.batch_size, replacement=True,
     )
     loader = DataLoader(train_ds, batch_size=args.batch_size, sampler=sampler,
@@ -222,7 +193,6 @@ def main() -> int:
     scheduler = LambdaLR(optimizer, lr_lambda)
 
     autocast_dtype = torch.bfloat16
-    print("[train] starting…", flush=True)
     model.train()
     t0 = time.time()
     running = 0.0
@@ -245,9 +215,9 @@ def main() -> int:
         running += float(loss.item()) * y.size(0)
         n_seen += y.size(0)
         if step % 25 == 0:
-            print(f"[step {step:>4}/{args.steps}] loss={running/max(1,n_seen):.4f} "
+            print(f"[step {step:>4}/{args.steps}] loss={running / max(1, n_seen):.4f} "
                   f"lr={optimizer.param_groups[0]['lr']:.2e} "
-                  f"elapsed={(time.time()-t0)/60:.1f}m", flush=True)
+                  f"elapsed={(time.time() - t0) / 60:.1f}m", flush=True)
 
     torch.save({
         "model_state": model.state_dict(),
@@ -255,7 +225,7 @@ def main() -> int:
         "step": step,
         "source_ckpt": str(args.ckpt),
     }, args.out)
-    print(f"[done] saved -> {args.out}, elapsed {(time.time()-t0)/60:.1f}m")
+    print(f"[done] saved -> {args.out}, elapsed {(time.time() - t0) / 60:.1f}m")
     return 0
 
 

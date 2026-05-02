@@ -1,11 +1,3 @@
-"""
-Honest evaluation metrics for an imbalanced binary classifier.
-
-We do NOT report bare accuracy — at 91/9 it is a vanity number.
-We report: F1 (positive class = drone), precision, recall, PR-AUC, ROC-AUC,
-and the full confusion matrix at multiple decision thresholds.
-"""
-
 from __future__ import annotations
 from dataclasses import dataclass
 
@@ -27,7 +19,7 @@ class ClassificationReport:
     precision: float
     recall: float
     accuracy: float
-    confusion: np.ndarray  # 2x2
+    confusion: np.ndarray
 
     def pretty(self) -> str:
         cm = self.confusion
@@ -40,9 +32,7 @@ class ClassificationReport:
         )
 
 
-def report_at_threshold(
-    y_true: np.ndarray, y_score: np.ndarray, threshold: float
-) -> ClassificationReport:
+def report_at_threshold(y_true, y_score, threshold):
     y_pred = (y_score >= threshold).astype(np.int64)
     return ClassificationReport(
         threshold=threshold,
@@ -54,7 +44,7 @@ def report_at_threshold(
     )
 
 
-def threshold_free(y_true: np.ndarray, y_score: np.ndarray) -> dict:
+def threshold_free(y_true, y_score):
     return {
         "pr_auc": average_precision_score(y_true, y_score),
         "roc_auc": roc_auc_score(y_true, y_score),

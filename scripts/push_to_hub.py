@@ -1,24 +1,6 @@
-"""
-Push the trained AST drone-detector to HuggingFace Hub.
-
-One-time setup:
-  1. Create a free account at https://huggingface.co/join
-  2. Create an access token: https://huggingface.co/settings/tokens (Write scope)
-  3. Run:  uv run huggingface-cli login   (paste the token)
-
-Then run this script:
-  uv run python scripts/push_to_hub.py --repo <your-username>/samid-drone-detector
-
-Your teammates can then download it with one line:
-  AutoModelForAudioClassification.from_pretrained("<your-username>/samid-drone-detector")
-
-Public repos are free. Private repos are also free for individual accounts.
-"""
-
 from __future__ import annotations
 import argparse
 from pathlib import Path
-import json
 
 import torch
 from huggingface_hub import HfApi, create_repo
@@ -27,20 +9,72 @@ from transformers import ASTConfig, ASTFeatureExtractor, ASTForAudioClassificati
 from src.config import CFG
 
 
-def main() -> None:
+README = """---
+language: en
+tags:
+  - audio
+  - audio-classification
+  - drone-detection
+  - acoustic
+license: mit
+---
+
+# Samid drone detector
+
+Audio Spectrogram Transformer fine-tuned for binary acoustic drone detection.
+
+## Quick use
+
+```python
+from transformers import AutoModelForAudioClassification, AutoFeatureExtractor
+import torch, soundfile as sf
+
+model = AutoModelForAudioClassification.from_pretrained("{repo}")
+fe = AutoFeatureExtractor.from_pretrained("{repo}")
+
+audio, sr = sf.read("clip.wav")
+inputs = fe(audio, sampling_rate=16000, return_tensors="pt")
+with torch.no_grad():
+    logits = model(**inputs).logits
+print(f"p(drone) = {{torch.softmax(logits, dim=-1)[0, 1].item():.4f}}")
+```
+
+## Training
+
+- Backbone: `MIT/ast-finetuned-audioset-10-10-0.4593`
+- Datasets: geronimobasso/drone-audio-detection-samples,
+  ahlab-drone-project/DroneAudioSet (splits 1-20)
+- Augmentations applied symmetrically across both classes:
+  codec round-trip, synthetic RIR, random EQ, FilterAugment, Patchout,
+  SpecAugment, Mixup. Asymmetric: urban-noise overlay onto drone class.
+
+## Performance
+
+| Test | Result |
+|---|---|
+| NUS DroneAudioSet held-out (48 clips) | 100% detection |
+| Geronimobasso sanity (50 random clips) | 24/25 drone, 25/25 no-drone |
+
+## Recommended inference
+
+For long audio, slide a 1-second window with 0.5s hop, apply a median
+filter to per-window probabilities, and require N consecutive windows
+above threshold. See `scripts/standalone_inference.py` in the repo.
+
+Trained on 1.0s windows at 16 kHz mono. May fire on rotor-like sounds.
+"""
+
+
+def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--repo", required=True,
-                   help="HF repo ID, e.g. 'username/samid-drone-detector'")
+    p.add_argument("--repo", required=True)
     p.add_argument("--ckpt", type=Path,
                    default=Path("runs/20260429-112104/best_abd.pt"))
-    p.add_argument("--private", action="store_true",
-                   help="Make repo private (default: public)")
+    p.add_argument("--private", action="store_true")
     args = p.parse_args()
 
-    print(f"Loading checkpoint: {args.ckpt}")
     ckpt = torch.load(args.ckpt, map_location="cpu", weights_only=False)
 
-    # Build model fresh, load weights
     fe = ASTFeatureExtractor.from_pretrained(CFG.backbone)
     cfg = ASTConfig.from_pretrained(CFG.backbone)
     cfg.num_labels = 2
@@ -52,102 +86,17 @@ def main() -> None:
     model.load_state_dict(ckpt["model_state"])
     model.eval()
 
-    # Create repo if not exists
-    print(f"Creating repo: {args.repo} (private={args.private})")
     create_repo(args.repo, private=args.private, exist_ok=True)
-
-    # Push model + feature extractor
-    print("Pushing model and feature extractor…")
     model.push_to_hub(args.repo)
     fe.push_to_hub(args.repo)
 
-    # Push a README so the page isn't empty
-    readme = f"""---
-language: en
-tags:
-  - audio
-  - audio-classification
-  - drone-detection
-  - acoustic
-license: mit
----
-
-# Samid Drone Detector
-
-Audio Spectrogram Transformer fine-tuned on geronimobasso/drone-audio-detection-samples
-for binary acoustic drone detection.
-
-## Quick use
-
-```python
-from transformers import AutoModelForAudioClassification, AutoFeatureExtractor
-import torch, soundfile as sf
-
-model = AutoModelForAudioClassification.from_pretrained("{args.repo}")
-fe = AutoFeatureExtractor.from_pretrained("{args.repo}")
-
-audio, sr = sf.read("clip.wav")  # any mono 16 kHz wav
-inputs = fe(audio, sampling_rate=16000, return_tensors="pt")
-with torch.no_grad():
-    logits = model(**inputs).logits
-prob_drone = torch.softmax(logits, dim=-1)[0, 1].item()
-print(f"p(drone) = {{prob_drone:.4f}}")
-```
-
-## Training pipeline
-
-Fine-tuned on combined geronimobasso + NUS DroneAudioSet (splits 1-20),
-holding out NUS splits 21-28 for validation.
-
-**Augmentations applied symmetrically across both classes** to break
-shortcut learning (per Nam et al. 2022 / reviewer methodology):
-- Codec round-trip (mp3/ogg) on 30% of clips
-- Synthetic Room Impulse Response convolution on 50% of clips
-- Random EQ filtering (high-pass, low-pass, shelf)
-- FilterAugment — random step-like spectrogram filters
-- Spectrogram Patchout — random rectangular regions zeroed
-- SpecAugment — time + frequency masking
-- Mixup (waveform-level)
-
-**Asymmetric** (drone class only): urban-noise overlay at random SNR (-5 to +20 dB),
-since deployment puts drones in urban environments and matches
-the no-drone class's recording distribution.
-
-## Performance (honest cross-dataset)
-
-| Test | Detection rate |
-|---|---|
-| NUS DroneAudioSet held-out (splits 21-28) | 48/48 (100%) |
-| Geronimobasso 50-clip sanity (random) | 24/25 drones / 25/25 no-drones |
-
-⚠️ Performance on extreme edge cases (distant drones in heavy wind,
-heavily compressed YouTube clips) is lower. This is true of all current
-acoustic drone detectors, including the AST AudioSet baseline.
-
-## Recommended inference
-
-For long audio (videos, recordings with narration/silence), use sliding
-window with median-filter aggregation and require N consecutive windows
-above threshold. See `scripts/standalone_inference.py` and `src/inference.py`
-in the GitHub repo.
-
-## Caveats
-
-- Trained on 1.0-second windows at 16 kHz mono.
-- May fire on rotor-like sounds (helicopters, drills, lawnmowers).
-- Range and accuracy degrade in wind > 5 m/s.
-"""
     HfApi().upload_file(
-        path_or_fileobj=readme.encode(),
+        path_or_fileobj=README.format(repo=args.repo).encode(),
         path_in_repo="README.md",
         repo_id=args.repo,
     )
 
-    print(f"\nDone. Your teammates can now run:")
-    print(f"  from transformers import AutoModelForAudioClassification, AutoFeatureExtractor")
-    print(f'  model = AutoModelForAudioClassification.from_pretrained("{args.repo}")')
-    print(f'  fe    = AutoFeatureExtractor.from_pretrained("{args.repo}")')
-    print(f"\nView it at: https://huggingface.co/{args.repo}")
+    print(f"Done. https://huggingface.co/{args.repo}")
 
 
 if __name__ == "__main__":

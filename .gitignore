@@ -1,31 +1,23 @@
-# Python
 __pycache__/
 *.py[oc]
 build/
 dist/
-wheels/
 *.egg-info
 .pytest_cache/
 .mypy_cache/
-.ruff_cache/
 
-# Virtual envs
 .venv/
 .env
 
-# Datasets and model artifacts (too big for git)
 data/
 runs/
 logs/
 
-# OS / editor
 .DS_Store
 .idea/
 .vscode/
 *.swp
 
-# Local Hugging Face cache (sometimes lands in cwd)
 .cache/
 
-# PID files
 *.pid

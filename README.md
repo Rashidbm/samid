@@ -1,38 +1,51 @@
-# Samid — Acoustic Drone Detection
+# samid
 
-Built for Defensathon 2026 (Saudi defense hackathon, Drones + AI track).
+Acoustic drone detector. AST fine-tuned on geronimobasso + NUS DroneAudioSet
+with domain adaptation on real-world recordings.
 
-Passive acoustic drone detection, classification, and localisation.
-Designed for cheap distributed microphone nodes running at the edge — no
-cloud dependency.
+Trained model: https://huggingface.co/Rashidbm/samid-drone-detector
 
-## Trained model
-
-Hosted on Hugging Face:
-**https://huggingface.co/Rashidbm/samid-drone-detector**
+## Run
 
 ```bash
-pip install torch transformers soundfile sounddevice numpy
-python scripts/standalone_inference.py --hub-id Rashidbm/samid-drone-detector
+pip install torch transformers soundfile sounddevice numpy scipy
+python scripts/standalone_inference.py --wav clip.mp3
 ```
 
-## Performance (held-out test, 18,032 samples)
+Live mic:
 
-| Metric    | Value  |
-|-----------|--------|
-| F1 @ 0.30 | 0.9974 |
-| Precision | 1.0000 |
-| Recall    | 0.9948 |
-| PR-AUC    | 1.0000 |
+```bash
+python scripts/standalone_inference.py
+```
 
-Within-dataset numbers. Cross-dataset performance expected lower.
+## Training
 
-## Repo layout
+```bash
+python scripts/download_geronimobasso.py
+python -m src.train
+python scripts/finetune_abdulrahman.py --abd-wav your_recording.wav
+python scripts/push_to_hub.py --repo username/samid-drone-detector
+```
 
-- `src/` — model, training, inference, triangulation, decoy detection, open-set head
-- `scripts/` — dataset download, training orchestrator, model push, standalone inference
-- `pyproject.toml` — dependencies (uv-managed)
+## Layout
+
+```
+src/
+  config.py       hyperparameters
+  data.py         dataset, windowing, splits
+  model.py        AST + binary head
+  losses.py       focal loss
+  metrics.py      F1 / PR-AUC / threshold sweep
+  augment.py      codec / RIR / EQ / FilterAugment / Patchout / SpecAugment
+  inference.py    median filter + consecutive-window aggregation
+  train.py        training loop
+scripts/
+  download_geronimobasso.py
+  finetune_abdulrahman.py
+  push_to_hub.py
+  standalone_inference.py
+```
 
 ## License
 
-MIT.
+MIT
