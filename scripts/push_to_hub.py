@@ -32,7 +32,7 @@ def main() -> None:
     p.add_argument("--repo", required=True,
                    help="HF repo ID, e.g. 'username/samid-drone-detector'")
     p.add_argument("--ckpt", type=Path,
-                   default=Path("runs/20260429-112104/best_calibrated.pt"))
+                   default=Path("runs/20260429-112104/best_finetuned.pt"))
     p.add_argument("--private", action="store_true",
                    help="Make repo private (default: public)")
     args = p.parse_args()
@@ -96,15 +96,22 @@ print(f"p(drone) = {{prob_drone:.4f}}")
 
 ## Performance
 
-On the geronimobasso held-out test set (18,032 unseen samples):
-- F1 = 0.9974
-- Precision = 1.0000
-- Recall = 0.9948
-- PR-AUC = 1.0000
+Fine-tuned on combined geronimobasso + NUS DroneAudioSet to break
+single-dataset overfit.
 
-⚠️ These numbers are within-dataset. Real-world performance depends on
-microphone, environment, and distance — expect 10–25 percentage points
-of F1 drop in adverse conditions.
+**Within-dataset (geronimobasso, 50-sample sanity check):**
+- Drone clips: 24/25 detected (mean p = 0.89)
+- No-drone clips: 25/25 rejected (mean p = 0.007)
+
+**Out-of-distribution (NUS DroneAudioSet, never seen during initial training):**
+- Drone clips: 6/6 detected (mean max p = 0.955)
+- This is the cross-dataset generalization number that matters for
+  real deployment.
+
+⚠️ Real-world performance depends on microphone, environment, distance,
+and noise. Expect lower confidence in extreme conditions. For long
+recordings (videos with narration / silence), use the multi-window
+aggregation in the standalone inference script.
 
 ## Caveats
 
