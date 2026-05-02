@@ -139,8 +139,18 @@ def run_wav(model, fe, dev, path, threshold, boost):
     print(f"  windows >= {threshold}     : {(smoothed >= threshold).sum()} / {raw.size}")
     print()
 
+    # Open-set check via probability spread: if probabilities are clustered
+    # near the decision boundary instead of confidently in either class,
+    # the audio is likely an unknown UAV signature the model wasn't trained on.
+    boundary_band = ((smoothed >= 0.30) & (smoothed < 0.55)).sum()
+    fraction_uncertain = boundary_band / max(1, smoothed.size)
+
     if longest >= 3 and smoothed.max() >= threshold:
-        verdict = f"DRONE DETECTED ({longest} consecutive windows above {threshold})"
+        if smoothed.max() < 0.55 and fraction_uncertain > 0.4:
+            verdict = (f"UNKNOWN UAV — drone-like but ambiguous "
+                       f"(peak {smoothed.max():.2f}, treat as threat)")
+        else:
+            verdict = f"DRONE DETECTED ({longest} consecutive windows above {threshold})"
     elif raw.size <= 2 and raw.max() >= threshold:
         verdict = f"DRONE DETECTED (p={raw.max():.3f})"
     elif smoothed.max() >= 0.30:

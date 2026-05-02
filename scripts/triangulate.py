@@ -10,6 +10,7 @@ import torch.nn.functional as F
 from transformers import AutoFeatureExtractor, AutoModelForAudioClassification
 
 from src.triangulation import localize, estimate_tdoas
+from src.decoy import analyse as decoy_analyse
 
 
 SR = 16_000
@@ -200,6 +201,46 @@ def main():
                 print(f"  travelled     : {total_distance:.2f} m over {duration:.1f} s "
                       f"(avg {avg_speed:.2f} m/s)")
 
+    # decoy / spatial coherence check
+    decoy = decoy_analyse(channels, mic_positions)
+    print()
+    print(f"decoy check: {decoy.label.upper()}")
+    print(f"  {decoy.explanation}")
+
+    # cueing handoff message
+    velocity = None
+    if len(trajectory) >= 2:
+        p0 = np.asarray(trajectory[0]["position"])
+        p1 = np.asarray(trajectory[-1]["position"])
+        dt = trajectory[-1]["t"] - trajectory[0]["t"]
+        if dt > 0:
+            velocity = ((p1 - p0) / dt).round(3).tolist()
+
+    threat_level = (
+        "decoy" if decoy.label == "decoy"
+        else "unreliable" if decoy.label == "unreliable"
+        else "moderate" if smoothed.max() < 0.7
+        else "high"
+    )
+
+    cueing = {
+        "drone_class": "unknown",
+        "position_m": loud_loc.position.round(3).tolist(),
+        "velocity_m_s": velocity,
+        "predicted_path_m": [t["position"] for t in trajectory],
+        "confidence": float(smoothed.max()),
+        "threat_level": threat_level,
+        "is_decoy": decoy.label == "decoy",
+        "longest_consecutive_windows_above_threshold": int(longest_run),
+        "timestamp_s": float(times[loud_idx]),
+    }
+    print()
+    print(f"cueing handoff:")
+    print(f"  threat level: {threat_level}")
+    print(f"  is decoy    : {decoy.label == 'decoy'}")
+    if velocity:
+        print(f"  velocity    : {velocity} m/s")
+
     output = {
         "drone_detected": True,
         "max_p_drone": float(smoothed.max()),
@@ -207,6 +248,14 @@ def main():
         "snapshot_position": loud_loc.position.round(3).tolist(),
         "snapshot_time_s": float(times[loud_idx]),
         "trajectory": trajectory,
+        "decoy_check": {
+            "label": decoy.label,
+            "position_std": decoy.position_std,
+            "smoothness": decoy.smoothness,
+            "linearity": decoy.linearity,
+            "explanation": decoy.explanation,
+        },
+        "cueing": cueing,
     }
     if args.out_json:
         args.out_json.write_text(json.dumps(output, indent=2))
