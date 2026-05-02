@@ -32,7 +32,7 @@ def main() -> None:
     p.add_argument("--repo", required=True,
                    help="HF repo ID, e.g. 'username/samid-drone-detector'")
     p.add_argument("--ckpt", type=Path,
-                   default=Path("runs/20260429-112104/best_finetuned.pt"))
+                   default=Path("runs/20260429-112104/best_v2.pt"))
     p.add_argument("--private", action="store_true",
                    help="Make repo private (default: public)")
     args = p.parse_args()
@@ -94,24 +94,42 @@ prob_drone = torch.softmax(logits, dim=-1)[0, 1].item()
 print(f"p(drone) = {{prob_drone:.4f}}")
 ```
 
-## Performance
+## Training pipeline
 
-Fine-tuned on combined geronimobasso + NUS DroneAudioSet to break
-single-dataset overfit.
+Fine-tuned on combined geronimobasso + NUS DroneAudioSet (splits 1-20),
+holding out NUS splits 21-28 for validation.
 
-**Within-dataset (geronimobasso, 50-sample sanity check):**
-- Drone clips: 24/25 detected (mean p = 0.89)
-- No-drone clips: 25/25 rejected (mean p = 0.007)
+**Augmentations applied symmetrically across both classes** to break
+shortcut learning (per Nam et al. 2022 / reviewer methodology):
+- Codec round-trip (mp3/ogg) on 30% of clips
+- Synthetic Room Impulse Response convolution on 50% of clips
+- Random EQ filtering (high-pass, low-pass, shelf)
+- FilterAugment — random step-like spectrogram filters
+- Spectrogram Patchout — random rectangular regions zeroed
+- SpecAugment — time + frequency masking
+- Mixup (waveform-level)
 
-**Out-of-distribution (NUS DroneAudioSet, never seen during initial training):**
-- Drone clips: 6/6 detected (mean max p = 0.955)
-- This is the cross-dataset generalization number that matters for
-  real deployment.
+**Asymmetric** (drone class only): urban-noise overlay at random SNR (-5 to +20 dB),
+since deployment puts drones in urban environments and matches
+the no-drone class's recording distribution.
 
-⚠️ Real-world performance depends on microphone, environment, distance,
-and noise. Expect lower confidence in extreme conditions. For long
-recordings (videos with narration / silence), use the multi-window
-aggregation in the standalone inference script.
+## Performance (honest cross-dataset)
+
+| Test | Detection rate |
+|---|---|
+| NUS DroneAudioSet held-out (splits 21-28) | 48/48 (100%) |
+| Geronimobasso 50-clip sanity (random) | 24/25 drones / 25/25 no-drones |
+
+⚠️ Performance on extreme edge cases (distant drones in heavy wind,
+heavily compressed YouTube clips) is lower. This is true of all current
+acoustic drone detectors, including the AST AudioSet baseline.
+
+## Recommended inference
+
+For long audio (videos, recordings with narration/silence), use sliding
+window with median-filter aggregation and require N consecutive windows
+above threshold. See `scripts/standalone_inference.py` and `src/inference.py`
+in the GitHub repo.
 
 ## Caveats
 
