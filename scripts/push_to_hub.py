@@ -32,7 +32,7 @@ def main() -> None:
     p.add_argument("--repo", required=True,
                    help="HF repo ID, e.g. 'username/samid-drone-detector'")
     p.add_argument("--ckpt", type=Path,
-                   default=Path("runs/20260429-112104/best.pt"))
+                   default=Path("runs/20260429-112104/best_calibrated.pt"))
     p.add_argument("--private", action="store_true",
                    help="Make repo private (default: public)")
     args = p.parse_args()

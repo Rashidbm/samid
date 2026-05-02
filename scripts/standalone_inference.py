@@ -9,13 +9,24 @@ USAGE:
     pip install torch transformers soundfile sounddevice numpy
 
   Live microphone:
-    python standalone_inference.py --hub-id <username>/samid-drone-detector
+    python standalone_inference.py --hub-id Rashidbm/samid-drone-detector
 
-  On a wav file:
-    python standalone_inference.py --hub-id <username>/samid-drone-detector --wav clip.wav
+  On a wav file (long files use multi-window aggregation, recommended for
+  YouTube clips and recordings):
+    python standalone_inference.py --hub-id Rashidbm/samid-drone-detector --wav clip.wav
 
   List available microphones:
-    python standalone_inference.py --hub-id <username>/samid-drone-detector --list-devices
+    python standalone_inference.py --hub-id Rashidbm/samid-drone-detector --list-devices
+
+NOTES:
+  - For long audio (videos with narration / music / silent intros), the script
+    slides 1-second windows every 0.5 seconds and reports MAX, not single-window.
+    This is essential because real-world audio rarely has the drone present at
+    one fixed moment.
+  - Model is calibrated to give confident probabilities (>0.95 on training-
+    distribution drone clips). If it outputs 0.20 on a clip you believe contains
+    a drone, the drone signal is likely faint relative to background — try
+    cropping to the loudest moment or using --threshold 0.30.
 """
 
 from __future__ import annotations
@@ -78,11 +89,36 @@ def run_wav(model, fe, dev, path: str, threshold: float, hop: float):
         arr = np.concatenate([arr, np.zeros(win - arr.size, dtype=np.float32)])
     print(f"file={path}  duration={arr.size/SR:.2f}s")
     print(f"{'t':>8}  {'p(drone)':>10}  decision")
+    probs = []
     for start in range(0, arr.size - win + 1, step):
         window = arr[start:start + win]
         p = predict_window(model, fe, dev, window)
+        probs.append(p)
         decision = "DRONE" if p >= threshold else "no drone"
         print(f"{start/SR:8.2f}  {p:10.4f}  {decision}")
+
+    if probs:
+        p_arr = np.asarray(probs)
+        n_above = int((p_arr >= threshold).sum())
+        print()
+        print("=" * 50)
+        print("AGGREGATE RESULT (multi-window):")
+        print(f"  windows analyzed:           {len(probs)}")
+        print(f"  max p(drone):               {p_arr.max():.4f}")
+        print(f"  99th percentile:            {np.percentile(p_arr, 99):.4f}")
+        print(f"  90th percentile:            {np.percentile(p_arr, 90):.4f}")
+        print(f"  median:                     {np.median(p_arr):.4f}")
+        print(f"  windows >= threshold:       {n_above} of {len(probs)}")
+        print()
+        if n_above >= 3:
+            verdict = f"DRONE DETECTED ({n_above} windows above threshold)"
+        elif p_arr.max() >= 0.30:
+            verdict = (f"drone-like signal detected at peak={p_arr.max():.2f} "
+                       f"but below threshold")
+        else:
+            verdict = "no clear drone signal"
+        print(f"  VERDICT: {verdict}")
+        print("=" * 50)
 
 
 def run_mic(model, fe, dev, device_idx, threshold: float, hop: float, smoothing: int):
