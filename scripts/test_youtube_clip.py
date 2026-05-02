@@ -139,14 +139,15 @@ def main() -> int:
         top_table.add_row(str(r), f"{times[idx]:.2f}", f"{probs[idx]:.4f}")
     console.print(top_table)
 
-    # Verdict
-    verdict = (
-        "DRONE DETECTED at multiple moments"
-        if (probs >= args.threshold).sum() >= 3
-        else "drone-like signal but below threshold — see top windows"
-        if probs.max() >= 0.30
-        else "no clear drone signal in this audio"
-    )
+    # Verdict — handles both single-window short clips and multi-window long clips
+    if probs.max() >= args.threshold and (probs >= args.threshold).mean() >= 0.40:
+        verdict = f"DRONE DETECTED ({(probs >= args.threshold).sum()}/{len(probs)} windows above threshold)"
+    elif (probs >= args.threshold).sum() >= 3:
+        verdict = "DRONE DETECTED at multiple moments"
+    elif probs.max() >= 0.30:
+        verdict = f"drone-like signal (peak p={probs.max():.2f}) — uncertain"
+    else:
+        verdict = "no clear drone signal"
     console.print(f"\n[bold]Verdict:[/bold] {verdict}")
     return 0
 
