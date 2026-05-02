@@ -69,7 +69,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--repo", required=True)
     p.add_argument("--ckpt", type=Path,
-                   default=Path("runs/20260429-112104/best_abd.pt"))
+                   default=Path("runs/20260429-112104/best_rw2.pt"))
     p.add_argument("--private", action="store_true")
     args = p.parse_args()
 
