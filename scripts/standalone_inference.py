@@ -274,9 +274,9 @@ def main() -> int:
                    help="Audio/video file (else live mic)")
     p.add_argument("--device", type=int, default=None, help="Mic device index")
     p.add_argument("--list-devices", action="store_true")
-    p.add_argument("--threshold", type=float, default=0.5,
-                   help="Decision threshold on p(drone). 0.5 default; try 0.3 for "
-                        "harder audio")
+    p.add_argument("--threshold", type=float, default=0.3,
+                   help="Decision threshold on p(drone). 0.3 default (F1-optimal "
+                        "from validation); raise to 0.5 for stricter detection")
     p.add_argument("--smoothing", type=int, default=2,
                    help="Live-mic: require N consecutive windows above threshold")
     p.add_argument("--boost-drone", action="store_true",
