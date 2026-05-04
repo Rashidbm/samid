@@ -348,8 +348,6 @@ function MicArrayInset({ mics, cs, dir, T }) {
     return { ox, oy, anchor };
   };
 
-  const insetTitle = (T && T.inset_title) || "MIC ARRAY · 1:1m";
-
   // bounding 2m square outline (anchored at min corner of the actual array)
   const aMinX = Math.min(...xs), aMinY = Math.min(...ys);
   const aMaxX = Math.max(...xs), aMaxY = Math.max(...ys);
@@ -361,13 +359,9 @@ function MicArrayInset({ mics, cs, dir, T }) {
       <rect width={SIZE} height={SIZE} rx="6"
         fill={cs.bgElev} stroke={cs.surfaceLineStrong} strokeWidth="0.6"
         opacity="0.96" />
-      <text x={dir === "rtl" ? SIZE - 10 : 10} y={16}
-        textAnchor={dir === "rtl" ? "end" : "start"}
-        fill={cs.textMuted} fontSize="9"
-        letterSpacing={dir === "rtl" ? 0 : 1.5}
-        fontFamily="var(--font-sans)" fontWeight="700">
-        {insetTitle}
-      </text>
+      {/* No title text — Arabic translation overflows the inset width.
+          The dashed bounding box, M1-Mn labels and the 1m scale bar make
+          this panel self-explanatory. */}
 
       {/* bounding 2m square outline */}
       <rect
