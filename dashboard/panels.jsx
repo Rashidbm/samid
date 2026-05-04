@@ -62,15 +62,6 @@ function ProbabilityGauge({ prob, T, dir, threshold = 0.6 }) {
       <svg viewBox="0 0 220 130" className="gauge-svg">
         {/* track */}
         {arc(0, 180, "var(--surface-line)", 10)}
-        {/* threshold tick at 60% (108°) */}
-        {(() => {
-          const a = (threshold * 180 - 90) * Math.PI / 180;
-          const ix = cx + Math.cos(a) * (r - 14);
-          const iy = cy + Math.sin(a) * (r - 14);
-          const ox = cx + Math.cos(a) * (r + 8);
-          const oy = cy + Math.sin(a) * (r + 8);
-          return <line x1={ix} y1={iy} x2={ox} y2={oy} stroke="var(--gold-500)" strokeWidth="1.8" />;
-        })()}
         {/* fill */}
         {pct > 0.001 && arc(0, pct * 180,
           pct > threshold ? "var(--alert)" : "var(--accent)", 10)}
