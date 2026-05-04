@@ -1,0 +1,38 @@
+# Things that have no business in the build context.
+.git/
+.gitignore
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.python-version
+.pytest_cache/
+.ruff_cache/
+
+# Editor / OS junk.
+.DS_Store
+.idea/
+.vscode/
+
+# Project-local caches that would bloat the image.
+.cache/
+.claude/
+
+# Heavy training artefacts — not needed in a runtime image.
+runs/
+wandb/
+
+# Most data is fine to ship for the demo — it's small and judges may want
+# to inspect specific recordings.  But keep a path to skip large datasets
+# by name if needed:
+data/geronimobasso/
+data/nusdroneaudioset/
+data/raw/
+data/processed/
+
+# Build / docker self-references.
+Dockerfile
+.dockerignore
+docker-compose.yml
+fly.toml
+.hf-space-readme.md

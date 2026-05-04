@@ -1,0 +1,46 @@
+/* Thmanyah Sans — UI body, labels, RTL Arabic everywhere */
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("./fonts/thmanyahsans-Light.woff2") format("woff2");
+  font-weight: 300; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("./fonts/thmanyahsans-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("./fonts/thmanyahsans-Medium.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("./fonts/thmanyahsans-Bold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("./fonts/thmanyahsans-Black.woff2") format("woff2");
+  font-weight: 900; font-style: normal; font-display: swap;
+}
+
+/* Thmanyah Display — header project name, hero numbers */
+@font-face {
+  font-family: "Thmanyah Display";
+  src: url("./fonts/thmanyahserifdisplay-Medium.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Display";
+  src: url("./fonts/thmanyahserifdisplay-Bold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Thmanyah Display";
+  src: url("./fonts/thmanyahserifdisplay-Black.woff2") format("woff2");
+  font-weight: 900; font-style: normal; font-display: swap;
+}
+
+/* Numerics: tabular monospace for clocks, gauges, JSON. */
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap");

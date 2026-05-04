@@ -21,3 +21,8 @@ logs/
 .cache/
 
 *.pid
+.hf-space-readme.md
+.claude/
+
+# uploads handled at runtime by the FastAPI backend; never commit them
+/tmp/saamid-uploads/

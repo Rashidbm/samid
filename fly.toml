@@ -1,0 +1,38 @@
+# Fly.io app config — serves the Saamid dashboard + backend in simulate
+# mode on a public URL.  Audio capture is impossible on a cloud VM (no
+# sound card), so this deployment loops a real drone phone recording
+# through the full pipeline.  Use it to share the live UI with anyone.
+#
+# Deploy:
+#   flyctl auth login
+#   flyctl launch --no-deploy --copy-config --name <your-app-name>
+#   flyctl deploy
+#
+# After the first deploy, the public URL is https://<app-name>.fly.dev/
+#
+# Notes:
+# - app= is intentionally generic — `flyctl launch` rewrites it.
+# - 2 GB RAM is enough for the AST model (~430 MB weights + inference).
+# - WebSocket routing works out of the box on Fly.
+
+app = "saamid"
+primary_region = "fra"          # Frankfurt — close-ish to Saudi Arabia
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "7860"
+  SAAMID_SIMULATE = "/app/data_demo/test_4mic.wav"
+
+[http_service]
+  internal_port = 7860
+  force_https = true
+  auto_stop_machines = "stop"     # save credit when nobody is looking
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 2
+  memory_mb = 2048

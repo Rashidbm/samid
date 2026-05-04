@@ -1,0 +1,16 @@
+{
+  "model": "Rashidbm/samid-drone-detector",
+  "n_shahed_windows": 70,
+  "n_neg_windows": 330,
+  "threshold": 0.9653902053833008,
+  "shahed_sim_stats": {
+    "mean": 0.9696226716041565,
+    "min": 0.9441400170326233,
+    "max": 0.9832262992858887
+  },
+  "other_sim_stats": {
+    "mean": 0.9254883527755737,
+    "min": 0.8378893136978149,
+    "max": 0.9814354181289673
+  }
+}

@@ -1,0 +1,45 @@
+# Docker Compose recipes for Saamid.  Pick the profile that matches your
+# scenario:
+#
+#   docker compose --profile demo up        # simulate mode, no hardware
+#   docker compose --profile live up        # real mics, requires --device
+#
+# Both expose the dashboard on http://localhost:8000
+
+services:
+  # Demo mode — replays the bundled drone phone recording through the full
+  # pipeline.  Useful for "show me what it does" without any hardware.
+  saamid-demo:
+    profiles: ["demo"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: saamid:latest
+    container_name: saamid-demo
+    ports:
+      - "8000:7860"
+    environment:
+      SAAMID_SIMULATE: /app/data_demo/test_4mic.wav
+    restart: unless-stopped
+
+  # Live mode — captures from a real audio interface plugged into the host.
+  # On Linux, --device /dev/snd gives the container access to the sound card.
+  # On macOS / Windows Docker Desktop, audio device passthrough is NOT
+  # supported by the Docker runtime — run the server natively in that case
+  # (uv run python -m scripts.serve) instead of in a container.
+  saamid-live:
+    profiles: ["live"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: saamid:latest
+    container_name: saamid-live
+    ports:
+      - "8000:7860"
+    environment:
+      SAAMID_SIMULATE: ""              # disable simulate fallback
+    devices:
+      - /dev/snd
+    group_add:
+      - audio
+    restart: unless-stopped

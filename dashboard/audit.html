@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Saamid · Logo overlay test</title>
+<link rel="stylesheet" href="assets/fonts.css" />
+<link rel="stylesheet" href="assets/styles.css" />
+<style>
+  body {
+    font-family: var(--font-sans);
+    margin: 0;
+    background: #f7f7f4;
+    color: #0e1411;
+    padding: 32px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 22px;
+    margin: 0 0 4px;
+  }
+  p.lede { color: #6c7568; font-size: 13px; margin: 0 0 28px; max-width: 720px; }
+  .row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: white;
+  }
+  .swatch {
+    height: 220px;
+    display: grid; place-items: center;
+    position: relative;
+  }
+  .swatch img {
+    width: 70%; height: auto; display: block;
+  }
+  .swatch.dark   { background: #0a1410; }       /* dark theme bg */
+  .swatch.elev   { background: #0f1d17; }       /* dark elev */
+  .swatch.cream  { background: #f1ead7; }       /* light theme bg */
+  .swatch.elev2  { background: #fbf7ee; }       /* light elev */
+  .swatch.green  { background: #046636; }       /* sampled green */
+  .swatch.gold   { background: #c9a356; }       /* sampled gold */
+  .meta {
+    padding: 10px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px;
+    letter-spacing: 0.10em; text-transform: uppercase;
+    color: #4a544d;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    background: white;
+  }
+  .meta .hex {
+    font-family: var(--font-mono); font-weight: 500;
+    text-transform: none; letter-spacing: 0;
+  }
+
+  .palette {
+    margin-top: 32px;
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+  .palette div {
+    display: flex; flex-direction: column; gap: 4px;
+    align-items: stretch;
+  }
+  .palette span {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #4a544d;
+  }
+  .chip {
+    height: 64px; border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .note {
+    margin-top: 28px;
+    padding: 14px 16px;
+    background: #fffaeb;
+    border: 1px solid #f3e7c8;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #4a544d;
+    max-width: 760px;
+    line-height: 1.55;
+  }
+</style>
+</head>
+<body>
+  <h1>Logo overlay test &nbsp;·&nbsp; sampled brand palette</h1>
+  <p class="lede">
+    Logo dropped at full opacity onto each dashboard surface tone &mdash; verifies the
+    transparent PNG sits clean on the actual canvas, with no cream plate.
+    The dark&#8209;theme background is intentionally tinted toward the logo green so the bird feels native.
+  </p>
+
+  <div class="row">
+    <div class="card">
+      <div class="swatch dark"><img src="assets/logo.png" alt="" /></div>
+      <div class="meta"><span>Dark · canvas</span><span class="hex">#0a1410</span></div>
+    </div>
+    <div class="card">
+      <div class="swatch elev"><img src="assets/logo.png" alt="" /></div>
+      <div class="meta"><span>Dark · elevated</span><span class="hex">#0f1d17</span></div>
+    </div>
+    <div class="card">
+      <div class="swatch cream"><img src="assets/logo.png" alt="" /></div>
+      <div class="meta"><span>Light · canvas</span><span class="hex">#f1ead7</span></div>
+    </div>
+    <div class="card">
+      <div class="swatch elev2"><img src="assets/logo.png" alt="" /></div>
+      <div class="meta"><span>Light · elevated</span><span class="hex">#fbf7ee</span></div>
+    </div>
+    <div class="card">
+      <div class="swatch green"><img src="assets/logo.png" alt="" /></div>
+      <div class="meta"><span>Logo green · sampled</span><span class="hex">#046636</span></div>
+    </div>
+    <div class="card">
+      <div class="swatch gold"><img src="assets/logo.png" alt="" /></div>
+      <div class="meta"><span>Logo gold · sampled</span><span class="hex">#c9a356</span></div>
+    </div>
+  </div>
+
+  <h1 style="margin-top:36px;">Sampled palette tokens</h1>
+  <p class="lede">Pulled directly from logo pixels &mdash; logo green at 75 796 px (avg 4·102·54), logo gold at 66 536 px (avg 200·165·92). Tokens scaled around those anchors.</p>
+
+  <div class="palette">
+    <div><div class="chip" style="background:#02391e"></div><span>green-900 #02391e</span></div>
+    <div><div class="chip" style="background:#034a28"></div><span>green-800 #034a28</span></div>
+    <div><div class="chip" style="background:#046636;border:1px solid #c9a356"></div><span>green-700 #046636 ★</span></div>
+    <div><div class="chip" style="background:#0d7a45"></div><span>green-600 #0d7a45</span></div>
+    <div><div class="chip" style="background:#1f9258"></div><span>green-500 #1f9258</span></div>
+    <div><div class="chip" style="background:#6cb892"></div><span>green-300 #6cb892</span></div>
+
+    <div><div class="chip" style="background:#8c6f2c"></div><span>gold-700 #8c6f2c</span></div>
+    <div><div class="chip" style="background:#a78535"></div><span>gold-600 #a78535</span></div>
+    <div><div class="chip" style="background:#c9a356;border:1px solid #046636"></div><span>gold-500 #c9a356 ★</span></div>
+    <div><div class="chip" style="background:#d8b46f"></div><span>gold-400 #d8b46f</span></div>
+    <div><div class="chip" style="background:#e6cc99"></div><span>gold-300 #e6cc99</span></div>
+    <div><div class="chip" style="background:#f3e7c8"></div><span>gold-100 #f3e7c8</span></div>
+  </div>
+
+  <div class="note">
+    ★ = exact sampled value. Logo file is a JPEG (no native alpha); transparency was produced by keying out cream pixels (R&gt;220 ∧ G&gt;215 ∧ B&gt;200), which is why the test above is decisive — if any cream remained, it would show as a halo on the green and gold swatches.
+  </div>
+</body>
+</html>

@@ -1,0 +1,243 @@
+/* ===================================================================
+   Saamid design tokens — earthen, warm, paper-on-desk identity
+   sampled from logo:
+     forest green  #046636   ink, primary
+     desert gold   #c9a356   accent, warning
+     warm cream    #f1ead7   surface
+   The light theme is the canonical surface (the logo lives on cream).
+   Dark theme is "night ops" — a dim, lamp-lit version of the same paper.
+   =================================================================== */
+:root {
+  /* logo greens */
+  --green-950: #021c0f;
+  --green-900: #02391e;
+  --green-800: #034a28;
+  --green-700: #046636;        /* ★ sampled */
+  --green-600: #0d7a45;
+  --green-500: #1f9258;
+  --green-300: #6cb892;
+  --green-100: #c8e2d4;
+
+  /* desert gold */
+  --gold-800: #6e5421;
+  --gold-700: #8c6f2c;
+  --gold-600: #a78535;
+  --gold-500: #c9a356;         /* ★ sampled */
+  --gold-400: #d8b46f;
+  --gold-300: #e6cc99;
+  --gold-200: #efd9b3;
+  --gold-100: #f3e7c8;
+
+  /* deep ink — for body text & mic glyphs */
+  --ink-900: #0c1a13;
+  --ink-800: #15291f;
+  --ink-700: #1f3a2c;
+
+  /* warm creams — paper */
+  --cream-50:  #fbf7ee;
+  --cream-100: #f5efdc;
+  --cream-200: #ede4c7;
+  --cream-300: #e2d6b1;
+
+  /* alert clay — used very sparingly (drone marker only) */
+  --clay-700: #8b3a18;
+  --clay-600: #a64a22;
+  --clay-500: #c25a2c;
+  --clay-300: #e4a78a;
+
+  --font-sans:    "Thmanyah Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-display: "Thmanyah Display", "Thmanyah Sans", Georgia, serif;
+  --font-mono:    "JetBrains Mono", "SF Mono", ui-monospace, "Menlo", monospace;
+
+  /* paper texture — very subtle two-direction noise */
+  --paper-noise:
+    radial-gradient(1px 1px at 20% 30%, rgba(112, 84, 33, 0.03) 50%, transparent 51%),
+    radial-gradient(1px 1px at 70% 60%, rgba(112, 84, 33, 0.03) 50%, transparent 51%),
+    radial-gradient(1px 1px at 40% 80%, rgba(112, 84, 33, 0.03) 50%, transparent 51%);
+}
+
+/* ---- LIGHT (formal) — clean off-white paper, green ink ---- */
+.theme-light {
+  --bg:           #f3f1ea;          /* soft warm white — formal, not creamy */
+  --bg-elev:      #fafaf5;          /* panel surface — near-white */
+  --bg-elev-2:    #ffffff;          /* inputs / nested */
+  --surface-line:        rgba(4, 56, 30, 0.12);
+  --surface-line-strong: rgba(4, 56, 30, 0.22);
+  --rule:                rgba(4, 56, 30, 0.18);
+  --text:        #0c1a13;
+  --text-muted:  #4a544d;
+  --text-faint:  #8a8f86;
+  --accent:      var(--green-700);
+  --accent-2:    var(--gold-700);
+  --accent-soft: rgba(4, 102, 54, 0.08);
+  --warn:        var(--gold-700);
+  --warn-soft:   rgba(140, 111, 44, 0.12);
+  --alert:       var(--clay-600);
+  --alert-soft:  rgba(166, 74, 34, 0.10);
+  --grid-line:        rgba(4, 56, 30, 0.06);
+  --grid-line-strong: rgba(4, 56, 30, 0.16);
+  --map-bg:      #ecead9;
+  --map-ink:     var(--green-800);
+  --panel-shadow: 0 1px 0 rgba(0,0,0,0.03), 0 8px 24px -18px rgba(12,26,19,0.14);
+  --panel-radius: 4px;
+}
+
+/* ---- DARK — formal executive surface (neutral charcoal, refined) ---- */
+.theme-dark {
+  --bg:           #0e1216;          /* neutral deep charcoal */
+  --bg-elev:      #161b21;          /* panel surface */
+  --bg-elev-2:    #1d2329;          /* inputs / nested */
+  --surface-line:        rgba(232, 226, 204, 0.08);
+  --surface-line-strong: rgba(232, 226, 204, 0.18);
+  --rule:                rgba(232, 226, 204, 0.14);
+  --text:        #e8eaec;            /* clean near-white */
+  --text-muted:  #9ba3ad;
+  --text-faint:  #6c7480;
+  --accent:      var(--green-500);
+  --accent-2:    var(--gold-500);
+  --accent-soft: rgba(31, 146, 88, 0.14);
+  --warn:        var(--gold-400);
+  --warn-soft:   rgba(216, 180, 111, 0.14);
+  --alert:       var(--clay-500);
+  --alert-soft:  rgba(194, 90, 44, 0.14);
+  --grid-line:        rgba(232, 226, 204, 0.06);
+  --grid-line-strong: rgba(232, 226, 204, 0.16);
+  --map-bg:      #0b0e12;
+  --map-ink:     var(--gold-300);
+  --panel-shadow: 0 1px 0 rgba(0,0,0,0.28), 0 12px 32px -18px rgba(0,0,0,0.55);
+  --panel-radius: 4px;
+}
+
+/* ---- base ---- */
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+html { background: var(--bg); }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.theme-light body, body.theme-light {
+  background-image: var(--paper-noise);
+  background-size: 220px 220px;
+}
+
+/* ---- type roles ---- */
+.t-display    { font-family: var(--font-display); font-weight: 900; letter-spacing: -0.01em; line-height: 1.05; }
+.t-serif      { font-family: var(--font-display); font-weight: 700; }
+.t-panel-ttl  { font-family: var(--font-sans); font-weight: 700; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); }
+[dir="rtl"] .t-panel-ttl { font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: 0; text-transform: none; color: var(--text); }
+.t-label      { font-family: var(--font-sans); font-weight: 500; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); }
+[dir="rtl"] .t-label { font-weight: 500; letter-spacing: 0; text-transform: none; font-size: 12px; }
+.t-body       { font-family: var(--font-sans); font-weight: 400; font-size: 13px; }
+.t-meta       { font-family: var(--font-sans); font-weight: 300; font-size: 11px; color: var(--text-muted); }
+.t-mono       { font-family: var(--font-mono); font-feature-settings: "tnum", "zero"; font-variant-numeric: tabular-nums; }
+.t-num        { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; font-weight: 500; }
+.t-eyebrow { font-family: var(--font-sans); font-weight: 500; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); }
+[dir="rtl"] .t-eyebrow { letter-spacing: 0; text-transform: none; font-size: 11.5px; }
+
+/* ---- chrome ---- */
+button {
+  font-family: inherit; font-size: inherit; color: inherit;
+  background: transparent; border: 0; cursor: pointer; padding: 0;
+}
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--surface-line-strong); border-radius: 999px; }
+
+/* ---- splash ---- */
+#splash {
+  position: fixed; inset: 0;
+  display: grid; place-items: center;
+  background: var(--bg);
+  background-image: var(--paper-noise);
+  background-size: 220px 220px;
+  z-index: 9999;
+  transition: opacity 0.5s ease;
+}
+#splash.hide { opacity: 0; pointer-events: none; }
+.splash-card { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+.splash-logo {
+  width: 200px; height: auto;
+  filter: drop-shadow(0 4px 14px rgba(12, 26, 19, 0.18));
+}
+.theme-dark .splash-logo {
+  filter: drop-shadow(0 0 38px rgba(31, 146, 88, 0.28));
+}
+.splash-logo img { width: 100%; height: auto; display: block; }
+.splash-name {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 26px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+.splash-name-en {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.30em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+.splash-sub {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  display: flex; align-items: center; gap: 8px;
+}
+[dir="rtl"] .splash-sub { letter-spacing: 0; text-transform: none; font-size: 12px; }
+.splash-sub::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold-600);
+  animation: splashPulse 1.6s ease-in-out infinite;
+}
+@keyframes splashPulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50%      { opacity: 1;    transform: scale(1.1); }
+}
+
+/* ---- containers — paper, not glass ---- */
+.panel {
+  background: var(--bg-elev);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--panel-radius);
+  box-shadow: var(--panel-shadow);
+  position: relative;
+}
+.panel::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background-image: var(--paper-noise);
+  background-size: 200px 200px;
+  pointer-events: none;
+  opacity: 0.6;
+  mix-blend-mode: multiply;
+}
+.theme-dark .panel::before { display: none; }
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+}
+.panel-head h3 { margin: 0; color: var(--text); }
+.panel-body { padding: 22px 24px; position: relative; }
+
+@media print {
+  body { background: white; color: black; }
+  .no-print { display: none !important; }
+}
